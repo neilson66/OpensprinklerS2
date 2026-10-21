@@ -47,6 +47,13 @@
 #include <esp_mac.h>
 #endif
 
+// DIY board: relay 1 is the master solenoid, so make station 1 the master by default.
+#if defined(OS_DIY_GPIO)
+#define DEFAULT_MASTER_STATION 1
+#else
+#define DEFAULT_MASTER_STATION 0
+#endif
+
 /** Declare static data members */
 sensor_memory_t OpenSprinkler::sensors[64] = {0};
 OSMqtt OpenSprinkler::mqtt;
@@ -242,7 +249,7 @@ const IOptDef iopt_defs[NUM_IOPTS] PROGMEM = {
 	/* IOPT_EXT_BOARDS         */ {"ext",   MAX_EXT_BOARDS,   0,                                 0,                      "# of exp. board:"},
 	/* IOPT_SEQUENTIAL_RETIRED */ {"seq",   1,                1,                                 IOPT_FLAG_RETIRED,      "----------------"},
 	/* IOPT_STATION_DELAY_TIME */ {"sdt",   255,              120,                               IOPT_FLAG_SIGNED_TIME,  "Stn. delay (sec)"},
-	/* IOPT_MASTER_STATION     */ {"mas",   MAX_NUM_STATIONS, 0,                                 0,                      "Master 1 (Mas1):"},
+	/* IOPT_MASTER_STATION     */ {"mas",   MAX_NUM_STATIONS, DEFAULT_MASTER_STATION,                                 0,                      "Master 1 (Mas1):"},
 	/* IOPT_MASTER_ON_ADJ      */ {"mton",  255,              120,                               IOPT_FLAG_SIGNED_TIME,  "Mas1  on adjust:"},
 	/* IOPT_MASTER_OFF_ADJ     */ {"mtof",  255,              120,                               IOPT_FLAG_SIGNED_TIME,  "Mas1 off adjust:"},
 	/* IOPT_URS_RETIRED        */ {"urs",   255,              0,                                 IOPT_FLAG_RETIRED,      "----------------"},
