@@ -35,7 +35,9 @@ uint8_t I2CRTC::addr = 0;
 
 I2CRTC::I2CRTC()
 {
+#if !defined(OS_DIY_GPIO) // DIY board has no I2C bus (and no RTC)
 	Wire.begin();
+#endif
 }
 
 bool I2CRTC::exists() {

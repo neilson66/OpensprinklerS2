@@ -15,6 +15,7 @@ enum ProfileId : uint8_t {
 	PROFILE_OS_40,
 	PROFILE_OSPI_BOARD,
 	PROFILE_DEMO_BOARD,
+	PROFILE_DIY_GPIO,
 };
 
 enum Capability : uint8_t {

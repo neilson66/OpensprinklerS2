@@ -28,6 +28,9 @@
 #include "api/server.h"
 #include "platform/gpio.h"
 #include "boards/hardware_detection.h"
+#if defined(OS_DIY_GPIO)
+#include "boards/diy_s2_config.h"
+#endif
 #ifdef __has_include
 	#if __has_include("testmode.h")
 		#include "testmode.h"
@@ -788,6 +791,18 @@ void OpenSprinkler::begin() {
 		expanders[i] = NULL;
 	detect_expanders();
 
+#elif defined(ESP32) && defined(OS_DIY_GPIO)
+	// DIY ESP32-S2 mini: relays on plain GPIOs, no I2C devices at all.
+	osboard::select(osboard::PROFILE_DIY_GPIO);
+	hw_type = HW_TYPE_AC; // plain relays switching 24VAC (or DC) valves; no boost/latch drivers
+	drio = nullptr;
+	for (unsigned char i = 0; i < osboard::DIY_NUM_RELAYS; i++) {
+		// Latch the OFF level before switching to output so the relay never pulses on at boot.
+		digitalWrite(osboard::DIY_RELAY_PINS[i], osboard::DIY_RELAY_ACTIVE_LOW ? HIGH : LOW);
+		pinMode(osboard::DIY_RELAY_PINS[i], OUTPUT);
+	}
+	for (unsigned char i = 0; i < MAX_NUM_BOARDS / 2; i++) expanders[i] = NULL;
+
 #elif defined(ESP32)
 	osboard::select(osboard::PROFILE_OS_40);
 	// Keep the shared SPI bus idle until external flash support is initialized.
@@ -890,9 +905,14 @@ void OpenSprinkler::begin() {
 	}
 
 #if defined(ARDUINO)
+	#if defined(OS_DIY_GPIO)
+		status.has_curr_sense = 0;  // DIY board has no current sensing
+		baseline_current = 0;
+	#else
 		status.has_curr_sense = 1;  // OpenSprinkler v3/v4 have current sensing
 		// measure baseline current
 		baseline_current = 80;
+	#endif
 #endif
 
 #if defined(USE_DISPLAY)
@@ -943,13 +963,16 @@ void OpenSprinkler::begin() {
 	pinModeExt(PIN_BUTTON_2, INPUT_PULLUP);
 	pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 
-	// detect and check RTC type
+	// detect and check RTC type (the DIY board has no I2C bus; time comes from NTP)
+#if !defined(OS_DIY_GPIO)
 	RTC.detect();
+#endif
 
 #else
 	sprinkler_log_prepare();
 #endif
 
+#if !defined(OS_DIY_GPIO) // no I2C bus on the DIY board
 	for (size_t i = 0; i < 4; i++) {
 		uint8_t address = 0x48 + i;
 #if defined(ADS1115_HARDWARE)
@@ -961,6 +984,7 @@ void OpenSprinkler::begin() {
 		ads1115_devices[i] = new ADS1115(address);
 #endif
 	}
+#endif // !OS_DIY_GPIO
 }
 
 #if defined(ARDUINO)
@@ -1233,6 +1257,16 @@ void OpenSprinkler::apply_all_station_bits(void (*post_activation_callback)()) {
 		}
 	}
 
+	#elif defined(ESP32) && defined(OS_DIY_GPIO)
+	// Direct GPIO relays for stations 1..DIY_NUM_RELAYS. status.enabled is honoured here so the
+	// "operation disabled" switch in the app really de-energises everything.
+	for (unsigned char i = 0; i < osboard::DIY_NUM_RELAYS; i++) {
+		bool on = status.enabled && ((applied_station_bits[i >> 3] >> (i & 7)) & 1);
+		digitalWrite(osboard::DIY_RELAY_PINS[i],
+			(on != osboard::DIY_RELAY_ACTIVE_LOW) ? HIGH : LOW);
+	}
+	engage_booster = 0;
+
 	#elif defined(ESP32)
 	if(hw_type==HW_TYPE_DC && engage_booster) {
 		digitalWriteExt(PIN_BOOST_EN, LOW);
@@ -1396,6 +1430,10 @@ void OpenSprinkler::sensor_resetall() {
 /** Read current in milliamps using the platform-specific ADC calibration. */
 #if defined(ARDUINO)
 uint16_t OpenSprinkler::read_current(bool use_ema) {
+#if defined(OS_DIY_GPIO)
+	(void)use_ema;
+	return 0; // no current sensing on the DIY board
+#else
 	static uint16_t ema = 0; // exponential moving average
 	uint16_t curr;
 #if defined(ESP8266)
@@ -1423,13 +1461,16 @@ uint16_t OpenSprinkler::read_current(bool use_ema) {
 #endif
 	ema = curr / 5 + ema * 4 / 5; // using alpha=0.2 for exponential moving average
 	return use_ema ? ema : curr;
+#endif
 }
 #endif
 
 /** Read the number of 8-station expansion boards */
 // Arduino has capability to detect number of expansion boards
 int OpenSprinkler::detect_exp() {
-#if defined(ARDUINO)
+#if defined(OS_DIY_GPIO)
+	return 0; // no expansion boards (no I2C bus)
+#elif defined(ARDUINO)
 	// detect the highest expansion board index
 	int n;
 	for(n=4;n>=0;n--) {

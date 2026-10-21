@@ -1,4 +1,5 @@
 #include "board_profile.h"
+#include "diy_s2_config.h"
 
 #if defined(ESP8266)
 #include <pgmspace.h>
@@ -80,6 +81,17 @@ const BoardProfile OSPI_PROFILE OSBOARD_PROGMEM = {
 	CAP_NONE,
 };
 
+// DIY ESP32-S2 mini: relays on plain GPIOs, no buttons, display, RF or Ethernet.
+const BoardProfile DIY_GPIO_PROFILE OSBOARD_PROGMEM = {
+	{{UNUSED_PIN, UNUSED_PIN, UNUSED_PIN},
+	 {DIY_SENSOR1_PIN, DIY_SENSOR2_PIN, UNUSED_PIN, UNUSED_PIN},
+	 {UNUSED_PIN, UNUSED_PIN, UNUSED_PIN, UNUSED_PIN},
+	 UNUSED_PIN, UNUSED_PIN, UNUSED_PIN, UNUSED_PIN,
+	 UNUSED_PIN, UNUSED_PIN, UNUSED_PIN, UNUSED_PIN},
+	2,
+	CAP_NONE,
+};
+
 const BoardProfile DEMO_PROFILE OSBOARD_PROGMEM = {
 	{{0, 0, 0},
 	 {0, 0, 0, 0},
@@ -130,6 +142,9 @@ void select(ProfileId id) {
 		break;
 	case PROFILE_DEMO_BOARD:
 		profile = &DEMO_PROFILE;
+		break;
+	case PROFILE_DIY_GPIO:
+		profile = &DIY_GPIO_PROFILE;
 		break;
 	default:
 		profile = &UNKNOWN_PROFILE;

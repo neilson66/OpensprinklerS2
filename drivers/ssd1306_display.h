@@ -1,6 +1,10 @@
 #pragma once
 
-#if defined(ARDUINO)
+#if defined(ARDUINO) && defined(OS_DIY_GPIO)
+
+#include "null_display.h"
+
+#elif defined(ARDUINO)
 
 #include <SSD1306.h>
 

@@ -435,6 +435,19 @@ enum {
 	#define RTC_I2CADDR      osboard::RTC_ADDRESS
 	#define CH224_I2CADDR    osboard::CH224_ADDRESS
 
+	#if defined(OS_DIY_GPIO)
+	// DIY ESP32-S2 mini: none of these peripherals exist; the values only keep shared code compiling.
+	#define PIN_CURR_SENSE   255
+	#define PIN_FLASH_CS     255
+	#define PIN_ETHER_IRQ    255
+	#define PIN_ETHER_RESET  255
+	#define PIN_ETHER_CS     255
+	#define PIN_SPI_MOSI     255
+	#define PIN_SPI_MISO     255
+	#define PIN_SPI_SCK      255
+	#define PIN_I2C_SCL      255
+	#define PIN_I2C_SDA      255
+	#else
 	#define PIN_CURR_SENSE   osboard::OS40_CURRENT_SENSE_PIN
 	#define PIN_FLASH_CS     osboard::OS40_EXTERNAL_FLASH_CS_PIN
 	#define PIN_ETHER_IRQ    osboard::OS40_ETHERNET_IRQ_PIN
@@ -445,6 +458,7 @@ enum {
 	#define PIN_SPI_SCK      osboard::OS40_SPI_CLOCK_PIN
 	#define PIN_I2C_SCL      osboard::OS40_I2C_CLOCK_PIN
 	#define PIN_I2C_SDA      osboard::OS40_I2C_DATA_PIN
+	#endif
 	#define ETHER_SPI_CLOCK  osboard::ETHERNET_SPI_CLOCK_HZ
 	#define ETHER_BUFFER_SIZE 4096
 	#define ETHER_BUFFER_ALLOC_SIZE ETHER_BUFFER_SIZE
