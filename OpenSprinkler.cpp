@@ -47,12 +47,7 @@
 #include <esp_mac.h>
 #endif
 
-// DIY board: relay 1 is the master solenoid, so make station 1 the master by default.
-#if defined(OS_DIY_GPIO)
-#define DEFAULT_MASTER_STATION 1
-#else
-#define DEFAULT_MASTER_STATION 0
-#endif
+#define DEFAULT_MASTER_STATION 0 // masters are handled by the controlling OpenSprinkler (remote station)
 
 /** Declare static data members */
 sensor_memory_t OpenSprinkler::sensors[64] = {0};

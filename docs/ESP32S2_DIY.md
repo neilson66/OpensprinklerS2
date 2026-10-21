@@ -11,7 +11,7 @@ Everything you may need to change is in `boards/diy_s2_config.h`:
 | Relay polarity | active LOW (`DIY_RELAY_ACTIVE_LOW`) |
 | Rain/soil sensor 1, 2 | GPIO 7, 8 (to GND, internal pull-up) |
 
-Station 1 (relay 1) is the master solenoid by default (Options -> Master Station).
+Intended use: a *remote* station box. The main OpenSprinkler adds these as "Remote Station (IP)" stations and owns the programs and master logic, so no master is set here. Relay 1 = station 1 (the back master solenoid).
 
 Not present on this board: I2C expanders/expansion boards, OLED, buttons, RTC (time comes from NTP),
 Ethernet, current sensing, RF, latching/DC boost. Stations 7-8 have no output; disable them in the app.
