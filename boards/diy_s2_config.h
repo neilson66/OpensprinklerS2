@@ -29,10 +29,11 @@ constexpr uint8_t DIY_NUM_RELAYS = 6;
 constexpr uint8_t DIY_RELAY_PINS[DIY_NUM_RELAYS] = {9, 11, 12, 18, 33, 35};
 constexpr bool DIY_RELAY_ACTIVE_LOW = false;
 
-// The relays use the S2 mini's SDA/SCL positions, so the BME280 goes on the extra INNER header row,
-// next to those pins: GPIO34 (SDA) and GPIO36 (SCL). Address 0x76 or 0x77.
-constexpr uint8_t DIY_I2C_SDA = 34;
-constexpr uint8_t DIY_I2C_SCL = 36;
+// The relays use the S2 mini's SDA/SCL positions, so the BME280 uses the board's two unused pads at the
+// TX and RX positions (U4 pads 16 and 15, no PCB tracks): GPIO39 (SDA) and GPIO37 (SCL). Solder wires
+// to those pads (plus 3V3 at pad 8 and GND at pad 10) and run them to the sensor. Address 0x76 or 0x77.
+constexpr uint8_t DIY_I2C_SDA = 39;
+constexpr uint8_t DIY_I2C_SCL = 37;
 
 // The board's "1wire" terminal is D5 (GPIO7) with a 10k pull-up to 5V (R1): leave R1 unfitted before
 // using it, since the S2 is not 5V tolerant. No other sensor inputs are wired.
