@@ -9,6 +9,9 @@
 	#include <WiFi.h>
 	#endif
 #include <LittleFS.h>
+#if defined(OS_DIY_GPIO)
+#include "../drivers/bme280.h"
+#endif
 extern bool useEth;   // declared in OpenSprinkler.h; for the RSSI guard
 #else
 #include <cstdio>
@@ -23,6 +26,11 @@ bool system_metric_is_supported(SystemMetric metric) {
 			#if defined(ESP8266)
 			case SystemMetric::HEAP_FRAGMENTATION:
 			#endif
+			#if defined(OS_DIY_GPIO)
+			case SystemMetric::BME280_TEMPERATURE:
+			case SystemMetric::BME280_HUMIDITY:
+			case SystemMetric::BME280_PRESSURE:
+			#endif
 			return true;
 #else
 		case SystemMetric::CPU_TEMPERATURE:
@@ -36,7 +44,12 @@ bool system_metric_is_supported(SystemMetric metric) {
 SensorUnit system_metric_native_unit(SystemMetric metric) {
 	switch (metric) {
 		case SystemMetric::CPU_TEMPERATURE:
+		case SystemMetric::BME280_TEMPERATURE:
 			return SensorUnit::Celsius;
+		case SystemMetric::BME280_HUMIDITY:
+			return SensorUnit::Percent;
+		case SystemMetric::BME280_PRESSURE:
+			return SensorUnit::Kilopascal;
 		case SystemMetric::FREE_HEAP:
 		case SystemMetric::FREE_FLASH:
 			return SensorUnit::Kilobyte;
@@ -92,6 +105,21 @@ void SystemInternalSensor::emit_description_json(BufferFiller* bfill) {
 	                    "\"lk\":[\"unit\"]}"),
 	              static_cast<uint8_t>(SensorUnit::Percent));
 	#endif
+	#if defined(OS_DIY_GPIO)
+	bfill->emit_p(PSTR(",{\"id\":5,\"l\":\"BME280 Temperature\","
+	                    "\"dfl\":{\"unit\":$D,\"min\":\"-40\",\"max\":\"85\"},"
+	                    "\"ug\":$D}"),
+	              static_cast<uint8_t>(SensorUnit::Celsius),
+	              static_cast<uint8_t>(SensorUnitGroup::Temperature));
+	bfill->emit_p(PSTR(",{\"id\":6,\"l\":\"BME280 Humidity\","
+	                    "\"dfl\":{\"unit\":$D,\"min\":\"0\",\"max\":\"100\"},"
+	                    "\"lk\":[\"unit\"]}"),
+	              static_cast<uint8_t>(SensorUnit::Percent));
+	bfill->emit_p(PSTR(",{\"id\":7,\"l\":\"BME280 Pressure\","
+	                    "\"dfl\":{\"unit\":$D,\"min\":\"30\",\"max\":\"110\"},"
+	                    "\"lk\":[\"unit\"]}"),
+	              static_cast<uint8_t>(SensorUnit::Kilopascal));
+	#endif
 #else
 	bfill->emit_p(PSTR("{\"id\":3,\"l\":\"CPU Temperature\","
 	                    "\"dfl\":{\"unit\":$D,\"min\":\"-40\",\"max\":\"185\"},"
@@ -141,6 +169,19 @@ float SystemInternalSensor::_get_raw_value() {
 			raw = (float)ESP.getHeapFragmentation();
 		#endif
 			break;
+		#if defined(OS_DIY_GPIO)
+		case SystemMetric::BME280_TEMPERATURE:
+		case SystemMetric::BME280_HUMIDITY:
+		case SystemMetric::BME280_PRESSURE: {
+			Bme280Reading r;
+			if (bme280_read(r)) {
+				raw = (this->metric == SystemMetric::BME280_TEMPERATURE) ? r.temperature_c :
+				      (this->metric == SystemMetric::BME280_HUMIDITY)    ? r.humidity_pct :
+				                                                           r.pressure_kpa;
+			}
+			break;
+		}
+		#endif
 		default:
 			break;
 	}

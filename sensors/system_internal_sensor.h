@@ -17,6 +17,9 @@ enum class SystemMetric : uint8_t {
 	WIFI_RSSI          = 2,  // ESP8266 only      — dBm
 	CPU_TEMPERATURE    = 3,  // OSPi/Linux only   — °C
 	HEAP_FRAGMENTATION = 4,  // ESP8266 only      — %
+	BME280_TEMPERATURE = 5,  // DIY ESP32-S2 only — °C
+	BME280_HUMIDITY    = 6,  // DIY ESP32-S2 only — %
+	BME280_PRESSURE    = 7,  // DIY ESP32-S2 only — kPa
 	MAX_VALUE,
 };
 
