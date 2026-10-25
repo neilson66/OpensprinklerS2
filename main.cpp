@@ -37,6 +37,10 @@
 #include "services/firmware_update.h"
 #include "sensors/flow_rate.h"
 #include "sensors/flow_rate_window.h"
+#if defined(OS_DIY_GPIO)
+#include <ESPmDNS.h>
+#include "boards/diy_s2_config.h"
+#endif
 
 #if defined(ESP8266)
 	#include <Arduino.h>
@@ -398,6 +402,9 @@ void ui_state_machine() {
 void do_setup() {
 	/* Clear WDT reset flag. */
 	WiFi.persistent(false);
+#if defined(OS_DIY_GPIO)
+	WiFi.setHostname(osboard::DIY_HOSTNAME); // must be set before WiFi starts
+#endif
 	led_blink_ms = LED_FAST_BLINK;
 
 	DEBUG_BEGIN(115200);
@@ -833,6 +840,12 @@ void do_loop()
 			os.lcd.clear();
 			os.save_wifi_ip();
 			start_server_client();
+#if defined(OS_DIY_GPIO)
+			MDNS.end(); // restart cleanly after a WiFi reconnect
+			if (MDNS.begin(osboard::DIY_HOSTNAME)) {
+				MDNS.addService("http", "tcp", (uint16_t)(os.iopts[IOPT_HTTPPORT_1]<<8) + os.iopts[IOPT_HTTPPORT_0]);
+			}
+#endif
 			os.state = OS_STATE_CONNECTED;
 			connecting_timeout = 0;
 		} else {

@@ -9,6 +9,9 @@
 
 namespace osboard {
 
+// Network name on the router and mDNS name (http://back-retic.local). Letters, digits and hyphens only.
+constexpr const char* DIY_HOSTNAME = "back-retic";
+
 constexpr uint8_t DIY_NUM_RELAYS = 6;
 
 // Relay GPIOs, station 1..6. Stations 7 and 8 exist in the UI (OpenSprinkler zones come in
